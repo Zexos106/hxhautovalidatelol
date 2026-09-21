@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Hero API Tester</title>
+<style>
+  body { background: #1a1a2e; color: #eee; font-family: monospace; padding: 20px; }
+  button { background: #0f3460; color: #eee; border: none; padding: 8px 16px; cursor: pointer; margin: 4px; border-radius: 4px; }
+  button:hover { background: #16213e; }
+  pre { background: #16213e; padding: 12px; border-radius: 4px; white-space: pre-wrap; max-height: 300px; overflow: auto; }
+  input { background: #16213e; color: #eee; border: 1px solid #0f3460; padding: 6px; border-radius: 4px; width: 300px; }
+  label { display: block; margin: 8px 0 4px; }
+  .section { margin: 16px 0; padding: 12px; border: 1px solid #0f3460; border-radius: 8px; }
+  h3 { margin: 0 0 8px; color: #e94560; }
+</style>
+</head>
+<body>
+<h2>Hero API Tester</h2>
+
+<div class="section">
+  <h3>1. Get Nonce</h3>
+  <button onclick="getNonce()">GET /auth/challengeNonce</button>
+  <pre id="nonceResult">—</pre>
+</div>
+
+<div class="section">
+  <h3>2. Authenticate</h3>
+  <label>User ID: <input id="userId" value="test_user_1"></label>
+  <label>Access Token: <input id="accessToken" value="my_token"></label>
+  <button onclick="authenticate()">POST /auth/v2</button>
+  <pre id="authResult">—</pre>
+</div>
+
+<div class="section">
+  <h3>3. Verify Session</h3>
+  <button onclick="verifySession()">GET /auth/v2 (with token)</button>
+  <pre id="verifyResult">—</pre>
+</div>
+
+<div class="section">
+  <h3>4. Get Player</h3>
+  <button onclick="getPlayer()">GET /players/:id</button>
+  <pre id="playerResult">—</pre>
+</div>
+
+<script>
+const API = location.origin;
+let currentNonce = "";
+let currentToken = "";
+let currentPlayerId = null;
+
+async function call(url, opts) {
+  const res = await fetch(API + url, opts);
+  return res.json();
+}
+
+async function getNonce() {
+  const data = await call("/auth/challengeNonce");
+  currentNonce = data.nonce;
+  document.getElementById("nonceResult").textContent = JSON.stringify(data, null, 2);
+}
+
+async function authenticate() {
+  if (!currentNonce) await getNonce();
+  const data = await call("/auth/v2", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      nonce: currentNonce,
+      userId: document.getElementById("userId").value,
+      accessToken: document.getElementById("accessToken").value,
+    }),
+  });
+  if (data.data) {
+    currentToken = data.data.accessToken;
+    currentPlayerId = data.data.userId;
+  }
+  currentNonce = "";
+  document.getElementById("authResult").textContent = JSON.stringify(data, null, 2);
+}
+
+async function verifySession() {
+  const data = await call("/auth/v2", {
+    headers: { Authorization: "Bearer " + currentToken },
+  });
+  document.getElementById("verifyResult").textContent = JSON.stringify(data, null, 2);
+}
+
+async function getPlayer() {
+  const data = await call("/players/" + (currentPlayerId || "1"));
+  document.getElementById("playerResult").textContent = JSON.stringify(data, null, 2);
+}
+</script>
+</body>
+</html>
