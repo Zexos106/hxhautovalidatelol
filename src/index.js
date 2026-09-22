@@ -121,6 +121,7 @@ function handleAuth(req, res) {
 
   const sessionToken = generateToken();
   const signatureSecret = generateToken();
+  const bearerToken = "Bearer " + sessionToken;
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
   runSql("INSERT INTO sessions (token, playerId, expiresAt) VALUES (?, ?, ?)", [sessionToken, player.playerId, expiresAt]);
 
@@ -131,7 +132,8 @@ function handleAuth(req, res) {
     UserId: String(player.playerId),
     FailedReason: null,
     SignatureSecret: signatureSecret,
-    TutorialCompleted: true
+    TutorialCompleted: true,
+    BearerToken: bearerToken
   });
 }
 
