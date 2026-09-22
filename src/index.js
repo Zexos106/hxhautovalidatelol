@@ -139,6 +139,124 @@ app.post("/auth", handleAuth);
 app.post("/v2/auth", handleAuth);
 app.post("/auth/v2", handleAuth);
 
+// --- Game API stubs (return valid empty responses) ---
+
+app.get("/shop/skus", (_req, res) => {
+  res.json({ skus: [] });
+});
+
+app.get("/server/joinInfo", (_req, res) => {
+  res.json({ isJoinable: true, joinType: 0, serverName: "CustomServer", port: 7777, ipAddress: "127.0.0.1", mapName: "Default", region: "eu", maxPlayers: 4, currentPlayers: 0 });
+});
+
+app.get("/client/availableRoom", (_req, res) => {
+  res.json({ isAvailable: true, roomId: "room_" + Date.now(), map: _req.query.map || "Default", region: _req.query.region || "eu" });
+});
+
+app.get("/client/player/rttInfo", (_req, res) => {
+  res.json({ rtt: 30, jitter: 5 });
+});
+
+app.get("/level/data", (_req, res) => {
+  res.json({ level: 1, exp: 0, maxExp: 100, expReward: 0, rewardAmount: 0, isMaxLevel: false });
+});
+
+app.get("/quest/data", (_req, res) => {
+  res.json({ quests: [] });
+});
+
+app.get("/event-quest/data", (_req, res) => {
+  res.json({ quests: [] });
+});
+
+app.get("/blockShop/catalog", (_req, res) => {
+  res.json({ catalog: [] });
+});
+
+app.get("/cosmetic/list", (_req, res) => {
+  res.json({ cosmetics: [] });
+});
+
+app.get("/mining/daily-state", (_req, res) => {
+  res.json({ canMine: true, mineCount: 0, maxMines: 5, nextResetTime: new Date(Date.now() + 86400000).toISOString() });
+});
+
+app.post("/mining/sync-state", (_req, res) => {
+  res.json({ success: true });
+});
+
+app.post("/level/claim", (_req, res) => {
+  res.json({ success: true, reward: { type: "gold", amount: 100 } });
+});
+
+app.post("/level/unlock/purchase", (_req, res) => {
+  res.json({ success: true });
+});
+
+app.get("/quest/progress", (_req, res) => {
+  res.json({ quests: [] });
+});
+
+app.post("/quest/claim", (_req, res) => {
+  res.json({ success: true });
+});
+
+app.post("/trade/commit", (_req, res) => {
+  res.json({ success: true });
+});
+
+app.post("/trade/create", (_req, res) => {
+  res.json({ success: true, tradeId: "trade_" + Date.now() });
+});
+
+app.get("/trade/eligibility", (_req, res) => {
+  res.json({ isEligible: true });
+});
+
+app.post("/soul/claimFreeGachaItem", (_req, res) => {
+  res.json({ success: true, item: { id: 1, name: "DefaultSoul", rarity: "common" } });
+});
+
+app.post("/loot/monsterDrop", (_req, res) => {
+  res.json({ drops: [] });
+});
+
+app.get("/checkins/status", (_req, res) => {
+  res.json({ checkedIn: false, streak: 0, lastCheckin: null });
+});
+
+app.post("/checkins/claim", (_req, res) => {
+  res.json({ success: true });
+});
+
+app.post("/checkins/claimAll", (_req, res) => {
+  res.json({ success: true });
+});
+
+app.get("/home/data", (_req, res) => {
+  res.json({ seats: [], items: [] });
+});
+
+app.post("/home/seat/place", (_req, res) => {
+  res.json({ success: true });
+});
+
+app.post("/home/seat/upgrade", (_req, res) => {
+  res.json({ success: true });
+});
+
+app.get("/soulDex", (_req, res) => {
+  res.json({ souls: [] });
+});
+
+app.post("/soulDex/claim/level", (_req, res) => {
+  res.json({ success: true });
+});
+
+app.post("/soulDex/claim/set", (_req, res) => {
+  res.json({ success: true });
+});
+
 // --- Catch-all 404 (matches original exactly) ---
 app.use((_req, res) => {
   res.status(404).json({ success: false, message: "Not Found", data: null });
