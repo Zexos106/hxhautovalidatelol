@@ -106,43 +106,38 @@ app.get("/auth/challengeNonce", (_req, res) => {
   res.json({ nonce });
 });
 
-app.post("/auth/v2", (req, res) => {
-  const { nonce, userId, accessToken: clientToken, platform, displayName } = req.body || {};
-  if (!nonce || !userId || !clientToken) {
-    return res.status(400).json({ success: false, message: "Missing required fields: nonce, userId, accessToken", data: null });
-  }
-
-  const nonceRow = queryOne("SELECT * FROM nonces WHERE nonce = ? AND used = 0", [nonce]);
-  if (!nonceRow) return res.status(400).json({ success: false, message: "Invalid or expired nonce", data: null });
-  runSql("UPDATE nonces SET used = 1 WHERE nonce = ?", [nonce]);
-
+function handleAuth(req, res) {
+  const { nonce, userId, accessToken: clientToken, platform, displayName, userNonce, attestationToken } = req.body || {};
+  const uid = userId || req.body?.UserId || req.body?.userId || "100000001";
   const plat = platform || "oculus";
-  let player = queryOne("SELECT * FROM players WHERE platformId = ? AND platform = ?", [userId, plat]);
+  const name = displayName || req.body?.DisplayName || "bytee";
+
+  let player = queryOne("SELECT * FROM players WHERE platformId = ? AND platform = ?", [uid, plat]);
   if (!player) {
-    const name = displayName || "Player_" + Math.floor(Math.random() * 9999);
-    runSql("INSERT INTO players (platformId, platform, displayName) VALUES (?, ?, ?)", [userId, plat, name]);
-    player = queryOne("SELECT * FROM players WHERE platformId = ? AND platform = ?", [userId, plat]);
+    runSql("INSERT INTO players (platformId, platform, displayName) VALUES (?, ?, ?)", [uid, plat, name]);
+    player = queryOne("SELECT * FROM players WHERE platformId = ? AND platform = ?", [uid, plat]);
   }
   runSql("UPDATE players SET lastLogin = datetime('now') WHERE playerId = ?", [player.playerId]);
 
-  const accessToken = generateToken();
-  const refreshToken = generateToken();
+  const sessionToken = generateToken();
+  const signatureSecret = generateToken();
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-  runSql("INSERT INTO sessions (token, refreshToken, playerId, expiresAt) VALUES (?, ?, ?, ?)", [accessToken, refreshToken, player.playerId, expiresAt]);
+  runSql("INSERT INTO sessions (token, playerId, expiresAt) VALUES (?, ?, ?)", [sessionToken, player.playerId, expiresAt]);
+
+  console.log("[Auth] Player " + player.playerId + " (" + name + ") authenticated");
 
   res.json({
-    success: true,
-    message: "OK",
-    data: {
-      success: true,
-      accessToken,
-      refreshToken,
-      userId: player.platformId,
-      displayName: player.displayName,
-      playerId: player.playerId,
-    },
+    Token: sessionToken,
+    UserId: String(player.playerId),
+    FailedReason: null,
+    SignatureSecret: signatureSecret,
+    TutorialCompleted: true
   });
-});
+}
+
+app.post("/auth", handleAuth);
+app.post("/v2/auth", handleAuth);
+app.post("/auth/v2", handleAuth);
 
 // --- Catch-all 404 (matches original exactly) ---
 app.use((_req, res) => {
